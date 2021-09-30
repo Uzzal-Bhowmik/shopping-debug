@@ -6,46 +6,57 @@ const loadProducts = () => {
 
 
 // show all product in UI 
-const showProducts = (products) => {
-  const allProducts = products.map((pd) => pd);
+const showProducts = (allProducts) => {
+
   for (const product of allProducts) {
-    const image = product.images;
+    const image = product.image;
     const div = document.createElement("div");
     div.classList.add("product");
-    div.innerHTML = `<div class="single-product">
-      <div>
-    <img class="product-image" src=${image}></img>
+    div.innerHTML = `
+    <div class="single-product">
+      <div class='img-container'>
+          <img class="product-image rounded" src=${image}></img>
       </div>
-      <h3>${product.title}</h3>
-      <p>Category: ${product.category}</p>
-      <h2>Price: $ ${product.price}</h2>
-      <button onclick="addToCart(${product.id},${product.price})" id="addToCart-btn" class="buy-now btn btn-success">add to cart</button>
-      <button id="details-btn" class="btn btn-danger">Details</button></div>
+
+      <div>
+        <h4 class="my-3">${product.title}</h4>
+        <p>Category: ${product.category}</p>
+        <h4 class="my-3">Price: $ ${product.price}</h4>
+        <pre class="fw-bold">Rating: <span class="text-white">${product.rating.rate}</span>/5 <br> People Rated: ${product.rating.count}</pre>
+        <button onclick="addToCart(${product.id},${product.price})" id="addToCart-btn" class="buy-now btn btn-warning">Add to Cart</button>
+        <button onclick="showDetails(${product.id})" id="details-btn" class="btn btn-outline-danger">Details</button> 
+      </div>
+    </div>
       `;
     document.getElementById("all-products").appendChild(div);
   }
 };
 let count = 0;
+// Handling onclick event on Add to Cart button 
 const addToCart = (id, price) => {
   count = count + 1;
+  document.getElementById("total-Products").innerText = count;
+
   updatePrice("price", price);
 
   updateTaxAndCharge();
-  document.getElementById("total-Products").innerText = count;
+
+  updateTotal();
+
 };
 
 const getInputValue = (id) => {
   const element = document.getElementById(id).innerText;
-  const converted = parseInt(element);
+  const converted = parseFloat(element);
   return converted;
 };
 
 // main price update function
-const updatePrice = (id, value) => {
+const updatePrice = (id, productPrice) => {
   const convertedOldPrice = getInputValue(id);
-  const convertPrice = parseFloat(value);
+  const convertPrice = parseFloat(productPrice);
   const total = convertedOldPrice + convertPrice;
-  document.getElementById(id).innerText = Math.round(total);
+  document.getElementById(id).innerText = total.toFixed(2);
 };
 
 // set innerText function
@@ -75,6 +86,43 @@ const updateTotal = () => {
   const grandTotal =
     getInputValue("price") + getInputValue("delivery-charge") +
     getInputValue("total-tax");
-  document.getElementById("total").innerText = grandTotal;
+
+  document.getElementById("total").innerText = grandTotal.toFixed(2);
 };
 loadProducts();
+
+// Display Single Product Details 
+const showDetails = async productId => {
+  const container = document.getElementById('single-product-container');
+  container.textContent = '';
+
+  // display card loader
+  const cardLoader = document.getElementById('card-loader');
+  cardLoader.style.display = 'block';
+
+  // fetching data using id 
+  const res = await fetch(`https://fakestoreapi.com/products/${productId}`);
+  const data = await res.json();
+
+  // Vanishing the loader 
+  cardLoader.style.display = 'none';
+
+  const div = document.createElement('div');
+  div.innerHTML = `
+    <div class="card mb-3 ms-3" style="max-width: 800px;">
+        <div class="row g-0">
+          <div class="col-md-4">
+            <img src="${data.image}" class="img-fluid rounded-start p-3" alt="...">
+          </div>
+          <div class="col-md-8">
+            <div class="card-body">
+              <h3 class="card-title">${data.title}</h3>
+              <p class="card-text">${data.description}</p>
+              <p class="card-text"><b>Price: $${data.price}</small></b>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  container.appendChild(div);
+}
